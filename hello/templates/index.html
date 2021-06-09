@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+  {% for issue in issues %}
+    <p>{{ issue.body }}</p>
+  {% endfor %}
+{% endblock %}

@@ -1,0 +1,6 @@
+django
+python-dotenv
+requests
+Flask
+gunicorn
+django-heroku
