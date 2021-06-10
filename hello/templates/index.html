@@ -2,7 +2,10 @@
 {% load static %}
 
 {% block content %}
-  {% for issue in issues %}
-    <p>{{ issue.body }}</p>
+  {% for key, data in groups %}
+    <h3>{{ key }}</h3>
+    {% for comment in data %}
+      <p>{{ comment.body }}</p>
+    {% endfor %}
   {% endfor %}
 {% endblock %}
