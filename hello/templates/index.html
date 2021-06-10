@@ -2,10 +2,23 @@
 {% load static %}
 
 {% block content %}
-  {% for key, data in groups %}
-    <h3>{{ key }}</h3>
-    {% for comment in data %}
-      <p>{{ comment.body }}</p>
-    {% endfor %}
+  {% for key, pair in groups %}
+    <h3><a href="https://github.com/bhermann/DoR/issues/{{ key }}">Issue #{{ key }}</a></h3>
+    <table class="table">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col">Document</th>
+          <th scope="col">Fleiss Kappa</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for doc, score in pair %}
+        <tr>
+          <td>{{ doc }}</td>
+          <td>{{ score }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
   {% endfor %}
 {% endblock %}

@@ -1,4 +1,6 @@
 django
+statsmodels
+pandas
 python-dotenv
 requests
 Flask
