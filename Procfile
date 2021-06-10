@@ -1,1 +1,1 @@
-web: gunicorn -b 0.0.0.0:8080 gettingstarted.wsgi
+web: gunicorn gettingstarted.wsgi
