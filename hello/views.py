@@ -18,7 +18,7 @@ def index(request):
             'Authorization': 'token ' + os.getenv('TOKEN')
         })
         if r.status_code != 200:
-            return render(request, 'error.html')
+            return render(request, 'error.html', {'status': r.status_code})
 
         cur_comments = r.json()
         page += 1
