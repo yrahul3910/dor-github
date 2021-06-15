@@ -8,15 +8,22 @@ import requests
 import pandas as pd
 
 # Create your views here.
-
-
 def index(request):
+    comments = []
+    page = 1
     load_dotenv()
-    r = requests.get('https://api.github.com/repos/bhermann/DoR/issues/comments', data={
-        'Authorization': 'token ' + os.getenv('TOKEN')
-    })
 
-    comments = r.json()
+    while True:
+        r = requests.get(f'https://api.github.com/repos/bhermann/DoR/issues/comments?page={page}&per_page=100', data={
+            'Authorization': 'token ' + os.getenv('TOKEN')
+        })
+
+        cur_comments = r.json()
+        page += 1
+        if len(cur_comments) == 0:
+            break
+        
+        comments.extend(cur_comments)
 
     # Group comments by issue
     comments.sort(key=lambda p: p['issue_url'])
@@ -27,7 +34,7 @@ def index(request):
 
     # Process each issue
     for key, data in groups:
-        data = [x for x in data if ' reused: ' in x['body']]
+        data = [x for x in data if 'reused:' in x['body']]
 
         # If there are no comments about reuse, skip
         if len(data) == 0:
