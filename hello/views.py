@@ -17,6 +17,8 @@ def index(request):
         r = requests.get(f'https://api.github.com/repos/bhermann/DoR/issues/comments?page={page}&per_page=100', data={
             'Authorization': 'token ' + os.getenv('TOKEN')
         })
+        if r.status_code != 200:
+            return render(request, 'error.html')
 
         cur_comments = r.json()
         page += 1
