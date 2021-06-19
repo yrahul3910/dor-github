@@ -68,7 +68,6 @@ def index(request):
                     for artifact in reused:
                         if artifact not in cur_groups[document].index:
                             # Seed the index
-                            cur_groups[document].index.append(artifact)
                             cur_groups[document].loc[artifact, 'y'] = (2 - multiple_comments)
                             cur_groups[document].loc[artifact,
                                                      'n'] = len(data) - 1
