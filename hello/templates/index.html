@@ -12,10 +12,14 @@
         </tr>
       </thead>
       <tbody>
-      {% for doc, score in pair %}
+      {% for doc, score, is_subpar in pair %}
         <tr>
           <td>{{ doc }}</td>
-          <td>{{ score }}</td>
+          {% if is_subpar %}
+            <td style="color: red">{{ score }}</td>
+          {% else %}
+            <td>{{ score }}</td>
+          {% endif %}
         </tr>
       {% endfor %}
       </tbody>

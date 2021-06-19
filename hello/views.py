@@ -82,8 +82,11 @@ def index(request):
                             cur_groups[document].loc[artifact, 'n'] -= (2 - multiple_comments)
 
         try:
-            final_groups.append(
-                (key, [(k, fleiss_kappa(df.to_numpy(), 'uniform')) for k, df in cur_groups.items()]))
+            kappas = []
+            for k, df in cur_groups.items():
+                kappa = round(fleiss_kappa(df.to_numpy(), 'uniform'), 2)
+                kappas.append((k, kappa, kappa < 0.6))
+            final_groups.append((key, kappas))
         except:
             pass
 
