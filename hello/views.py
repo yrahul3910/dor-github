@@ -64,20 +64,23 @@ def index(request):
                     # Process each artifact
                     for artifact in reused:
                         if artifact not in cur_groups[document].index:
+                            # How many comments are there?
+                            multiple_comments = (len(data) > 1)
+
                             # Seed the index
                             cur_groups[document].index.append(artifact)
-                            cur_groups[document].loc[artifact, 'y'] = 2
+                            cur_groups[document].loc[artifact, 'y'] = (2 - multiple_comments)
                             cur_groups[document].loc[artifact,
                                                      'n'] = len(data) - 1
 
                         # Populate the DataFrame
                         if cur_groups[document].loc[artifact, :].sum() != len(data):
-                            cur_groups[document].loc[artifact, 'y'] = 2
+                            cur_groups[document].loc[artifact, 'y'] = (2 - multiple_comments)
                             cur_groups[document].loc[artifact,
                                                      'n'] = len(data) - 1
                         else:
-                            cur_groups[document].loc[artifact, 'y'] += 2
-                            cur_groups[document].loc[artifact, 'n'] -= 2
+                            cur_groups[document].loc[artifact, 'y'] += (2 - multiple_comments)
+                            cur_groups[document].loc[artifact, 'n'] -= (2 - multiple_comments)
 
         try:
             final_groups.append(
