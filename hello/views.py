@@ -44,6 +44,9 @@ def index(request):
 
         cur_groups = {}
 
+        # Are there multiple comments?
+        multiple_comments = (len(data) > 1)
+
         # Process each comment
         for comment in data:
             body = comment['body']
@@ -64,9 +67,6 @@ def index(request):
                     # Process each artifact
                     for artifact in reused:
                         if artifact not in cur_groups[document].index:
-                            # How many comments are there?
-                            multiple_comments = (len(data) > 1)
-
                             # Seed the index
                             cur_groups[document].index.append(artifact)
                             cur_groups[document].loc[artifact, 'y'] = (2 - multiple_comments)
