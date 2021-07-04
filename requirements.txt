@@ -3,7 +3,7 @@ statsmodels
 pandas
 python-dotenv
 requests
-requests_cahce
+requests_cache
 Flask
 gunicorn
 django-heroku
