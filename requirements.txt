@@ -2,6 +2,7 @@ django
 statsmodels
 pandas
 python-dotenv
+matplotlib
 requests
 requests_cache
 Flask
