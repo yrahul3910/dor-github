@@ -9,14 +9,15 @@ import requests
 from statsmodels.stats.inter_rater import fleiss_kappa
 import requests_cache
 import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
 import base64
 import io
 from io import StringIO
 import re
 
-FILE_REGEX = '\[[a-zA-Z0-9.-]+\]\((https://github.com/bhermann/DoR[a-zA-Z0-9/.-]*)'
-
+FILE_REGEX = '\[.*\]\((https:\/\/github.com\/bhermann\/DoR\/files\/.*)\)'
+sns.set()
 
 def normalize_index(x):
     if not isinstance(x, str):
@@ -37,6 +38,7 @@ def index(request):
     load_dotenv()
 
     while True:
+        print('Fetching page', page)
         session = requests_cache.CachedSession('dor-cache', expire_after=3600)
         r = session.get(f'https://api.github.com/repos/bhermann/DoR/issues/comments?page={page}&per_page=100', data={
             'Authorization': 'token ' + os.getenv('TOKEN')
@@ -51,6 +53,8 @@ def index(request):
             break
         
         comments.extend(cur_comments)
+    
+    print('Processing', len(comments), 'comments.')
 
     # Group comments by issue
     comments.sort(key=lambda p: p['issue_url'])
@@ -63,7 +67,7 @@ def index(request):
     # Process each issue
     for key, data in groups:
         # Filter data
-        data = [x for x in data if 'reused:' in x['body'] or re.match(FILE_REGEX, x['body'])]
+        data = [x for x in data if 'reused:' in x['body'] or len(re.findall(FILE_REGEX, x['body'])) > 0]
 
         # If there are no comments about reuse, skip
         if len(data) == 0:
@@ -79,16 +83,30 @@ def index(request):
             body = comment['body']
 
             # Check for file in the comment.
-            link = re.match(FILE_REGEX, body)
-            if link is not None:
+            link = re.findall(FILE_REGEX, body)
+            if len(link) > 0:
                 # We have a comment with a CSV
-                url = link.groups()[0]
+                url = link[0]
 
                 # Get the file
                 with requests.get(url) as r:
                     r.raise_for_status()
                     df: pd.DataFrame = pd.read_csv(StringIO(r.content.decode('utf-8')))
-                    df['paper_doi'] = [x.strip() for x in df['paper_doi']]
+                    df.columns = [x.strip() for x in df.columns]
+
+                    try:
+                        df.dropna(axis=0, inplace=True, subset=['paper_doi'])
+                    except KeyError as err:
+                        print(err, df.columns)
+                        
+                    try:
+                        df['paper_doi'] = [x.strip() for x in df['paper_doi']]
+                    except KeyError as err:
+                        print(err, df.columns)
+                        continue
+                    except AttributeError as err:
+                        print(err, df['paper_doi'])
+                        continue
 
                     groups = df.groupby('paper_doi')
                     for doi, group in groups:
@@ -157,13 +175,13 @@ def index(request):
                 for k, df in cur_groups.items():
                     kappa = round(fleiss_kappa(df.to_numpy(), 'uniform'), 2)
                     scores_only.append(kappa)
-                    kappas.append((k, kappa, kappa < 0.6))
+                    kappas.append((k, kappa))
                 final_groups.append((key, kappas))
         except:
             pass
 
     _, ax = plt.subplots()
-    ax.hist(scores_only, density=True)
+    sns.histplot(data=scores_only, alpha=0.7, kde=True,  ax=ax)
     ax.set_xlabel('Fleiss\' Kappa')
     ax.set_ylabel('Density')
     ax.set_title('Distribution of Kappa scores')
@@ -174,4 +192,6 @@ def index(request):
     base64_data = base64.b64encode(buf.read())
     base64_data = 'data:image/jpg;base64,' + base64_data.decode('utf-8')
 
-    return render(request, "index.html", {'groups': final_groups, 'hist': base64_data})
+    num_papers = len(scores_only)
+
+    return render(request, "index.html", {'num_papers': num_papers, 'groups': final_groups, 'hist': base64_data})
