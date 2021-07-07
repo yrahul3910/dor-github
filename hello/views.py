@@ -37,7 +37,7 @@ def index(request):
     load_dotenv()
 
     while True:
-        session = requests_cache.CachedSession('dor-cache')
+        session = requests_cache.CachedSession('dor-cache', expire_after=3600)
         r = session.get(f'https://api.github.com/repos/bhermann/DoR/issues/comments?page={page}&per_page=100', data={
             'Authorization': 'token ' + os.getenv('TOKEN')
         })
