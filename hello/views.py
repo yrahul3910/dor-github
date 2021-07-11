@@ -91,7 +91,14 @@ def index(request):
                 # Get the file
                 with requests.get(url) as r:
                     r.raise_for_status()
-                    df: pd.DataFrame = pd.read_csv(StringIO(r.content.decode('utf-8')))
+
+                    try:
+                        df: pd.DataFrame = pd.read_csv(StringIO(r.content.decode('utf-8')), sep=None, engine='python')
+                    except pd.errors.ParserError as err:
+                        print('Parse error in issue', key)
+                        print()
+                        continue
+
                     df.columns = [x.strip() for x in df.columns]
 
                     try:
@@ -102,7 +109,8 @@ def index(request):
                     try:
                         df['paper_doi'] = [x.strip() for x in df['paper_doi']]
                     except KeyError as err:
-                        print(err, df.columns)
+                        print('Column paper_doi not found. Columns are', df.columns)
+                        print()
                         continue
                     except AttributeError as err:
                         print(err, df['paper_doi'])
@@ -173,9 +181,11 @@ def index(request):
             if len(cur_groups) > 0:
                 kappas = []
                 for k, df in cur_groups.items():
-                    kappa = round(fleiss_kappa(df.to_numpy(), 'uniform'), 2)
-                    scores_only.append(kappa)
+                    kappa = min(1., round(fleiss_kappa(df.to_numpy(), 'uniform'), 2))
                     kappas.append((k, kappa))
+
+                    if multiple_comments:
+                        scores_only.append(kappa)
                 final_groups.append((key, kappas))
         except:
             pass
