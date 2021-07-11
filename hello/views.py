@@ -14,6 +14,7 @@ import pandas as pd
 import base64
 import io
 from io import StringIO
+import matplotlib as mpl
 import re
 
 FILE_REGEX = '\[.*\]\((https:\/\/github.com\/bhermann\/DoR\/files\/.*)\)'
@@ -191,10 +192,15 @@ def index(request):
             pass
 
     _, ax = plt.subplots()
-    sns.histplot(data=scores_only, alpha=0.7, kde=True,  ax=ax)
+    sns.histplot(data=scores_only, alpha=0.7, kde=True,  ax=ax, binwidth=0.1)
     ax.set_xlabel('Fleiss\' Kappa')
     ax.set_ylabel('Density')
     ax.set_title('Distribution of Kappa scores')
+
+    # Plot the minor gridlines too
+    ax.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
+    ax.grid(b=True, which='major', color='w', linewidth=1.0)
+    ax.grid(b=True, which='minor', color='w', linewidth=0.5)
 
     buf = io.BytesIO()
     plt.savefig(buf, format='jpg')
