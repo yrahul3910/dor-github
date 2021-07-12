@@ -11,18 +11,23 @@ import requests_cache
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+import math
 import base64
 import io
 from io import StringIO
 import matplotlib as mpl
 import re
+from pprint import pprint
 
 FILE_REGEX = '\[.*\]\((https:\/\/github.com\/bhermann\/DoR\/files\/.*)\)'
 sns.set()
 
 def normalize_index(x):
     if not isinstance(x, str):
-        x = str(x)
+        if not math.isnan(x):
+            x = str(int(x))
+        else:
+            x = str(x)
                                 
     x = x.strip()
     if x[0] != '[':
@@ -110,7 +115,7 @@ def index(request):
                     try:
                         df['paper_doi'] = [x.strip() for x in df['paper_doi']]
                     except KeyError as err:
-                        print('Column paper_doi not found. Columns are', df.columns)
+                        print('In issue', key, 'column paper_doi not found. Columns are', df.columns)
                         print()
                         continue
                     except AttributeError as err:
@@ -192,7 +197,7 @@ def index(request):
             pass
 
     _, ax = plt.subplots()
-    sns.histplot(data=scores_only, alpha=0.7, kde=True,  ax=ax, binwidth=0.1)
+    sns.histplot(data=scores_only, alpha=0.7, kde=True,  ax=ax)
     ax.set_xlabel('Fleiss\' Kappa')
     ax.set_ylabel('Density')
     ax.set_title('Distribution of Kappa scores')
