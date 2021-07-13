@@ -30,6 +30,8 @@ def normalize_index(x):
             x = str(x)
                                 
     x = x.strip()
+
+    if len(x) == 0: return x
     if x[0] != '[':
         x = f'[{x}'
     if x[-1] != ']':
