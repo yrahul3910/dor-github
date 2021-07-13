@@ -71,6 +71,12 @@ def index(request):
 
     final_groups = []
     scores_only = []
+    num_papers = {
+        'multiple_reviewers': 0,
+        'all_papers': 0,
+        'kappa_1': 0,
+        'good_kappa': 0
+    }
 
     # Process each issue
     for key, data in groups:
@@ -191,9 +197,17 @@ def index(request):
                 for k, df in cur_groups.items():
                     kappa = min(1., round(fleiss_kappa(df.to_numpy(), 'uniform'), 2))
                     kappas.append((k, kappa))
+                    num_papers['all_papers'] += 1
 
                     if multiple_comments:
                         scores_only.append(kappa)
+                        num_papers['multiple_reviewers'] += 1
+
+                        if kappa == 1:
+                            num_papers['kappa_1'] += 1
+                        
+                        if kappa > 0.6:
+                            num_papers['good_kappa'] += 1
                 final_groups.append((key, kappas))
         except:
             pass
@@ -214,7 +228,5 @@ def index(request):
     buf.seek(0)
     base64_data = base64.b64encode(buf.read())
     base64_data = 'data:image/jpg;base64,' + base64_data.decode('utf-8')
-
-    num_papers = len(scores_only)
 
     return render(request, "index.html", {'num_papers': num_papers, 'groups': final_groups, 'hist': base64_data})
