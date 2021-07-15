@@ -107,7 +107,7 @@ def index(request):
                     r.raise_for_status()
 
                     try:
-                        df: pd.DataFrame = pd.read_csv(StringIO(r.content.decode('utf-8')), sep=None, engine='python')
+                        df: pd.DataFrame = pd.read_csv(StringIO(r.content.decode('latin-1')), sep=None, engine='python')
                     except pd.errors.ParserError as err:
                         print('Parse error in issue', key)
                         print()
