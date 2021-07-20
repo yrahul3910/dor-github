@@ -45,10 +45,12 @@
     <div>
       <h3>Statistics</h3>
       <div style="display: flex; flex-direction: column; justify-content: center; margin-top: 30px">
+        <p><b>Number of work packets:</b> {{ num_issues }}</p>
         <p><b>Number of papers covered:</b> {{ num_papers.all_papers }}</p>
         <p><b>Number of papers with multiple reviewers:</b> {{ num_papers.multiple_reviewers }}</p>
         <p style="margin-left: 20px"><b>...of which papers with kappa = +1.0:</b> {{ num_papers.kappa_1 }}</p>
         <p style="margin-left: 20px"><b>...of which papers with good kappa:</b> {{ num_papers.good_kappa }}</p>
+        <p><b>Median reading time:</b> {{ median_read_time }} minutes</p>
       </div>
     </div>
     <img src="{{ hist }}" />

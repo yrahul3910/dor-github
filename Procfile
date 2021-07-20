@@ -1,1 +1,1 @@
-web: gunicorn gettingstarted.wsgi --timeout 120
+web: gunicorn gettingstarted.wsgi --timeout 240
