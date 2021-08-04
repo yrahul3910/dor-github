@@ -39,6 +39,7 @@ TIME_REGEX = '\d+m?(?:\s+)?:\d+'
 
 sns.set()
 
+
 def normalize_index(x):
     """
     Normalizes a citation. Adds in square brackets on each side
@@ -49,14 +50,15 @@ def normalize_index(x):
             x = str(int(x))
         else:
             x = str(x)
-                                
+
     x = x.strip()
 
-    if len(x) == 0: return x
+    if len(x) == 0:
+        return x
     if x[0] != '[':
         x = f'[{x}'
     if x[-1] != ']':
-        x =  f'{x}]'
+        x = f'{x}]'
     return x
 
 
@@ -67,7 +69,7 @@ def normalize_doi(x):
     x = x.strip()
     if not x.startswith('http'):
         x = f'https://doi.org/{x}'
-    
+
     return x
 
 
@@ -80,7 +82,8 @@ def index(request):
     start = time.time()
 
     while True:
-        session = requests_cache.CachedSession('dor-cache', expire_after=3600)
+        session = requests_cache.CachedSession(
+            'dor-cache', expire_after=3600 * 24)
         r = session.get(f'https://api.github.com/repos/bhermann/DoR/issues/comments?page={page}&per_page=100', data={
             'Authorization': 'token ' + os.getenv('TOKEN')
         })
@@ -92,11 +95,12 @@ def index(request):
         page += 1
         if len(cur_comments) == 0:
             break
-        
+
         comments.extend(cur_comments)
-    
+
     if DEBUG:
-        print('Processing', len(comments), 'comments.', round(time.time() - start, 2), 'seconds elapsed.')
+        print('Processing', len(comments), 'comments.', round(
+            time.time() - start, 2), 'seconds elapsed.')
 
     # Group comments by issue
     comments.sort(key=lambda p: p['issue_url'])
@@ -128,7 +132,8 @@ def index(request):
     # Process each issue
     for key, data in groups:
         # Filter data
-        data = [x for x in data if 'reused:' in x['body'] or len(re.findall(FILE_REGEX, x['body'])) > 0]
+        data = [x for x in data if 'reused:' in x['body']
+                or len(re.findall(FILE_REGEX, x['body'])) > 0]
 
         # If there are no comments about reuse, skip
         if len(data) == 0:
@@ -198,13 +203,15 @@ def index(request):
                     url = link[0]
 
                     # Get the file
-                    session = requests_cache.CachedSession('dor-cache-files', expire_after=3600*24*7)
+                    session = requests_cache.CachedSession(
+                        'dor-cache-files', expire_after=3600*24*7)
                     with session.get(url) as r:
                         r.raise_for_status()
 
                         # Get the data
                         try:
-                            df: pd.DataFrame = pd.read_csv(StringIO(r.content.decode('latin-1')), sep=None, engine='python')
+                            df: pd.DataFrame = pd.read_csv(
+                                StringIO(r.content.decode('latin-1')), sep=None, engine='python')
                         except pd.errors.ParserError as err:
                             print('Parse error in issue', key, ':', err)
                             print()
@@ -215,15 +222,18 @@ def index(request):
 
                         # Dump rows with no paper_doi (reusing DOI)
                         try:
-                            df.dropna(axis=0, inplace=True, subset=['paper_doi'])
+                            df.dropna(axis=0, inplace=True,
+                                      subset=['paper_doi'])
                         except KeyError as err:
                             print(err, df.columns)
 
-                        # Normalize the DOIs  
+                        # Normalize the DOIs
                         try:
-                            df['paper_doi'] = [normalize_doi(x) for x in df['paper_doi']]
+                            df['paper_doi'] = [normalize_doi(
+                                x) for x in df['paper_doi']]
                         except KeyError as err:
-                            print('In issue', key, 'column paper_doi not found. Columns are', df.columns)
+                            print(
+                                'In issue', key, 'column paper_doi not found. Columns are', df.columns)
                             print()
                             continue
                         except AttributeError as err:
@@ -236,27 +246,32 @@ def index(request):
                             if doi not in cur_groups:
                                 # Build the DataFrame index
                                 index = group['citation_number']
-                                index = set([normalize_index(x) for x in index])
+                                index = set([normalize_index(x)
+                                             for x in index])
 
                                 cur_groups[doi] = pd.DataFrame(
                                     index=index, columns=['y', 'n'])
-                            
+
                             for artifact in group['citation_number']:
                                 artifact = normalize_index(artifact)
                                 if artifact not in cur_groups[doi].index:
                                     # Seed the index
-                                    cur_groups[doi].loc[artifact, 'y'] = (2 - multiple_comments)
+                                    cur_groups[doi].loc[artifact, 'y'] = (
+                                        2 - multiple_comments)
                                     cur_groups[doi].loc[artifact,
-                                                            'n'] = len(data) - 1
-                                
+                                                        'n'] = len(data) - 1
+
                                 # Populate the DataFrame
                                 if cur_groups[doi].loc[artifact, :].sum() != len(data):
-                                    cur_groups[doi].loc[artifact, 'y'] = (2 - multiple_comments)
+                                    cur_groups[doi].loc[artifact, 'y'] = (
+                                        2 - multiple_comments)
                                     cur_groups[doi].loc[artifact,
-                                                            'n'] = len(data) - 1
+                                                        'n'] = len(data) - 1
                                 else:
-                                    cur_groups[doi].loc[artifact, 'y'] += (2 - multiple_comments)
-                                    cur_groups[doi].loc[artifact, 'n'] -= (2 - multiple_comments)
+                                    cur_groups[doi].loc[artifact,
+                                                        'y'] += (2 - multiple_comments)
+                                    cur_groups[doi].loc[artifact,
+                                                        'n'] -= (2 - multiple_comments)
 
                     continue
                 elif 'reused:' not in body:
@@ -279,18 +294,22 @@ def index(request):
                             artifact = normalize_index(artifact)
                             if artifact not in cur_groups[document].index:
                                 # Seed the index
-                                cur_groups[document].loc[artifact, 'y'] = (2 - multiple_comments)
+                                cur_groups[document].loc[artifact, 'y'] = (
+                                    2 - multiple_comments)
                                 cur_groups[document].loc[artifact,
-                                                        'n'] = len(data) - 1
+                                                         'n'] = len(data) - 1
 
                             # Populate the DataFrame
                             if cur_groups[document].loc[artifact, :].sum() != len(data):
-                                cur_groups[document].loc[artifact, 'y'] = (2 - multiple_comments)
+                                cur_groups[document].loc[artifact, 'y'] = (
+                                    2 - multiple_comments)
                                 cur_groups[document].loc[artifact,
-                                                        'n'] = len(data) - 1
+                                                         'n'] = len(data) - 1
                             else:
-                                cur_groups[document].loc[artifact, 'y'] += (2 - multiple_comments)
-                                cur_groups[document].loc[artifact, 'n'] -= (2 - multiple_comments)
+                                cur_groups[document].loc[artifact,
+                                                         'y'] += (2 - multiple_comments)
+                                cur_groups[document].loc[artifact,
+                                                         'n'] -= (2 - multiple_comments)
 
         try:
             # Do we have kappas in the issue?
@@ -298,7 +317,8 @@ def index(request):
                 kappas = []
                 for k, df in cur_groups.items():
                     # Workaround for issue with kappa > 1
-                    kappa = min(1., round(fleiss_kappa(df.to_numpy(), 'uniform'), 2))
+                    kappa = min(1., round(fleiss_kappa(
+                        df.to_numpy(), 'uniform'), 2))
                     kappas.append((k, kappa))
 
                     # Collect stats
@@ -310,7 +330,7 @@ def index(request):
 
                         if kappa == 1:
                             num_papers['kappa_1'] += 1
-                        
+
                         if kappa > 0.6:
                             num_papers['good_kappa'] += 1
                 final_groups.append((key, kappas))
@@ -318,15 +338,19 @@ def index(request):
             pass
 
         # Record the time taken to process the issue
-        issues_parsing_times.append((key, len(data), round(time.time() - issues_parsing_start_time, 2)))
+        issues_parsing_times.append((key, len(data), round(
+            time.time() - issues_parsing_start_time, 2)))
         issues_parsing_start_time = time.time()
 
-    _, [ax0, ax1] = plt.subplots(nrows=2, ncols=1, figsize=(6, 8), tight_layout=True)
+    _, [ax0, ax1] = plt.subplots(
+        nrows=2, ncols=1, figsize=(6, 8), tight_layout=True)
 
     sns.histplot(data=scores_only, alpha=0.7, kde=True,  ax=ax0)
     ax0.set_xlabel('Fleiss\' Kappa')
     ax0.set_ylabel('Frequency')
     ax0.set_title('Distribution of Kappa scores')
+
+    print(statistics.median(scores_only), statistics.mean(scores_only))
 
     # Plot the minor gridlines too
     ax0.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
@@ -334,9 +358,10 @@ def index(request):
     ax0.grid(b=True, which='minor', color='w', linewidth=0.5)
 
     # Now plot times
-    sns.histplot(data=reading_times, alpha=0.7, kde=True, ax=ax1)
+    sns.histplot(data=reading_times, alpha=0.7,
+                 kde=True, stat='probability', ax=ax1)
     ax1.set_xlabel('Reading time (min)')
-    ax1.set_ylabel('Frequency')
+    ax1.set_ylabel('Probability')
     ax1.set_title('Distribution of reading times')
 
     buf = io.BytesIO()
@@ -351,11 +376,11 @@ def index(request):
         pprint(issues_parsing_times)
 
     return render(request, "index.html",
-        {
-            'num_papers': num_papers,
-            'num_issues': num_issues,
-            'groups': final_groups,
-            'hist': base64_data,
-            'median_read_time': round(statistics.median(reading_times), 2)
-        }
-    )
+                  {
+                      'num_papers': num_papers,
+                      'num_issues': num_issues,
+                      'groups': final_groups,
+                      'hist': base64_data,
+                      'median_read_time': round(statistics.median(reading_times), 2)
+                  }
+                  )
