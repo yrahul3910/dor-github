@@ -212,13 +212,15 @@ def index(request):
                         try:
                             df: pd.DataFrame = pd.read_csv(
                                 StringIO(r.content.decode('latin-1')), sep=None, engine='python')
-                        except pd.errors.ParserError as err:
-                            print('Parse error in issue', key, ':', err)
+                        except:
+                            # We can get a _csv.Error or ParserError, but we cannot catch
+                            # _csv.Error apparently.
+                            print('Parse error in issue', key)
                             print()
                             continue
 
                         # Preprocess the columns
-                        df.columns = [x.strip() for x in df.columns]
+                        df.columns = [x.strip().lower().replace(' ', '_').replace('citation_no', 'citation_number') for x in df.columns]
 
                         # Dump rows with no paper_doi (reusing DOI)
                         try:
@@ -246,8 +248,8 @@ def index(request):
                             if doi not in cur_groups:
                                 # Build the DataFrame index
                                 index = group['citation_number']
-                                index = set([normalize_index(x)
-                                             for x in index])
+                                index = list(set([normalize_index(x)
+                                             for x in index]))
 
                                 cur_groups[doi] = pd.DataFrame(
                                     index=index, columns=['y', 'n'])
@@ -343,7 +345,7 @@ def index(request):
         issues_parsing_start_time = time.time()
 
     _, [ax0, ax1] = plt.subplots(
-        nrows=2, ncols=1, figsize=(6, 8), tight_layout=True)
+        nrows=2, ncols=1, figsize=(6, 8), dpi=150, tight_layout=True)
 
     sns.histplot(data=scores_only, alpha=0.7, kde=True,  ax=ax0)
     ax0.set_xlabel('Fleiss\' Kappa')
