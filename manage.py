@@ -4,8 +4,9 @@ import sys
 
 if __name__ == "__main__":
     # On startup, delete cache.
-    if os.path.exists('dor-cache.sqlite'):
-        os.remove('dor-cache.sqlite')
+    # Uncomment for latest results. For paper results, leave commented.
+    #if os.path.exists('dor-cache.sqlite'):
+    #    os.remove('dor-cache.sqlite')
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "gettingstarted.settings")
 

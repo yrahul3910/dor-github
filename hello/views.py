@@ -85,7 +85,7 @@ def index(request):
         session = requests_cache.CachedSession(
             'dor-cache', expire_after=3600 * 24)
         r = session.get(f'https://api.github.com/repos/bhermann/DoR/issues/comments?page={page}&per_page=100', data={
-            'Authorization': 'token ' + os.getenv('TOKEN')
+            'Authorization': 'Bearer ' + os.getenv('TOKEN')
         })
         if r.status_code != 200:
             print(r.content)
@@ -344,8 +344,7 @@ def index(request):
             time.time() - issues_parsing_start_time, 2)))
         issues_parsing_start_time = time.time()
 
-    _, [ax0, ax1] = plt.subplots(
-        nrows=2, ncols=1, figsize=(6, 8), dpi=150, tight_layout=True)
+    _, ax0 = plt.subplots(1, 1, figsize=(6, 4), dpi=150, tight_layout=True)
 
     sns.histplot(data=scores_only, alpha=0.7, kde=True,  ax=ax0)
     ax0.set_xlabel('Fleiss\' Kappa')
@@ -359,6 +358,10 @@ def index(request):
     ax0.grid(b=True, which='major', color='w', linewidth=1.0)
     ax0.grid(b=True, which='minor', color='w', linewidth=0.5)
 
+    plt.savefig('kappa.svg')
+
+    _, ax1 = plt.subplots(1, 1, figsize=(6, 4), dpi=150, tight_layout=True)
+
     # Now plot times
     sns.histplot(data=reading_times, alpha=0.7,
                  kde=True, stat='probability', ax=ax1)
@@ -368,6 +371,7 @@ def index(request):
 
     buf = io.BytesIO()
     plt.savefig(buf, format='jpg')
+    plt.savefig('reading.svg')
     buf.seek(0)
     base64_data = base64.b64encode(buf.read())
     base64_data = 'data:image/jpg;base64,' + base64_data.decode('utf-8')
